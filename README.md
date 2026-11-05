@@ -1,1 +1,0 @@
-# durbar-image-api

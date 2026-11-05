@@ -1,0 +1,18 @@
+
+services:
+  - type: web
+    name: durbar-image-api
+    runtime: node
+    plan: free
+
+    buildCommand: npm install
+    startCommand: npm start
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: IMGBB_API_KEY
+        sync: false
