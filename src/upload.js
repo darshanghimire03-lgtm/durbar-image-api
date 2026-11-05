@@ -1,4 +1,3 @@
-
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -86,7 +85,6 @@ router.post("/", upload.single("image"), async (req, res) => {
       return res.status(502).send("Image upload failed");
     }
 
-    // Extract the actual ImgBB image ID and filename.
     const imagePath = new URL(result.data.url).pathname
       .split("/")
       .filter(Boolean);
@@ -107,10 +105,13 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     const base = publicBase.replace(/\/+$/, "");
 
-    const ownImageUrl =
-      `${base}/picture/${encodeURIComponent(imageId)}/${encodeURIComponent(imageFilename)}`;
+    // Put the ImgBB ID inside the single filename segment.
+    const publicFilename = `${imageId}--${imageFilename}`;
 
-    // Return ONLY your own public image URL.
+    const ownImageUrl =
+      `${base}/picture/${encodeURIComponent(publicFilename)}`;
+
+    // Return only your own URL.
     return res
       .status(200)
       .type("text/plain")

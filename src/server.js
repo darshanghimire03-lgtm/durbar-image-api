@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const { Readable } = require("node:stream");
@@ -18,10 +17,9 @@ app.get("/", (req, res) => {
     name: "Durbar Image API",
     status: "online",
     storage: "ImgBB",
-    publicDomain: "https://durbar-plus2.vercel.app",
     endpoints: {
       upload: "POST /upload",
-      image: "GET /picture/:id/:filename",
+      image: "GET /picture/:filename",
       health: "GET /health"
     }
   });
@@ -34,20 +32,27 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Serve an ImgBB image through your own domain.
-app.get("/picture/:id/:filename", async (req, res) => {
+// Image URL: /picture/image-id--filename.jpg
+app.get("/picture/:file", async (req, res) => {
   try {
-    const { id, filename } = req.params;
+    const file = req.params.file;
+    const separator = file.indexOf("--");
+
+    if (separator <= 0) {
+      return res.status(400).send("Invalid image URL");
+    }
+
+    const imageId = file.slice(0, separator);
+    const filename = file.slice(separator + 2);
 
     if (
-      !/^[A-Za-z0-9_-]{1,100}$/.test(id) ||
+      !/^[A-Za-z0-9_-]{1,100}$/.test(imageId) ||
       !/^[A-Za-z0-9._-]{1,160}$/.test(filename)
     ) {
       return res.status(400).send("Invalid image path");
     }
 
-    const imageUrl =
-      `https://i.ibb.co/${id}/${filename}`;
+    const imageUrl = `https://i.ibb.co/${imageId}/${filename}`;
 
     const response = await fetch(imageUrl, {
       signal: AbortSignal.timeout(30000)
@@ -105,23 +110,14 @@ app.use((error, req, res, next) => {
   console.error(error);
 
   if (error.code === "LIMIT_FILE_SIZE") {
-    return res.status(413).json({
-      success: false,
-      error: "IMAGE_TOO_LARGE"
-    });
+    return res.status(413).send("IMAGE_TOO_LARGE");
   }
 
   if (error.message === "INVALID_IMAGE_TYPE") {
-    return res.status(400).json({
-      success: false,
-      error: "INVALID_IMAGE_TYPE"
-    });
+    return res.status(400).send("INVALID_IMAGE_TYPE");
   }
 
-  res.status(500).json({
-    success: false,
-    error: "SERVER_ERROR"
-  });
+  res.status(500).send("SERVER_ERROR");
 });
 
 const PORT = process.env.PORT || 3000;
